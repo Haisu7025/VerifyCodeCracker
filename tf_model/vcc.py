@@ -190,7 +190,8 @@ def train_crack_captcha_cnn(max_step=200):
     output = crack_captcha_cnn(X, keep_prob)
     # loss
     # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(output, Y))
-    loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(output, Y))
+    loss = tf.reduce_mean(
+        tf.nn.sigmoid_cross_entropy_with_logits(logits=output, labels=Y))
     # 最后一层用来分类的softmax和sigmoid有什么不同？
     # optimizer 为了加快训练 learning_rate应该开始大，然后慢慢衰
     optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
@@ -208,7 +209,7 @@ def train_crack_captcha_cnn(max_step=200):
         while True:
             batch_x, batch_y = get_next_batch(sampleTrain(100, traindata))
             _, lossSize = sess.run([optimizer, loss], feed_dict={
-                                   X: batch_x, Y: batch_y, keep_prob: 0.75})
+                                   X: batch_x, Y: batch_y, keep_prob: 0.5})
             if step % 5 == 0:
                 print("step is:" + str(step), u"损失函数大小为" + str(lossSize))
                 batch_x_test, batch_y_test = get_next_batch(testdata)
@@ -252,6 +253,7 @@ def predict(testdata):
     with tf.Session() as sess:
         # sess.run(tf.global_variables_initializer())
         saver.restore(sess, tf.train.latest_checkpoint('./model/'))
+        saver.restore(sess, tf.train.latest_checkpoint('./model/'))
         batch_size = len(testdata)
         count = 0
         for i in range(batch_size):
@@ -293,4 +295,5 @@ def predict_single(image_file):
 
 
 if __name__ == '__main__':
-    train_crack_captcha_cnn(max_step=5000)
+    with tf.device("/cpu:0"):
+        train_crack_captcha_cnn(max_step=5000)
